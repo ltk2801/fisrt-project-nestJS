@@ -6,7 +6,6 @@ import {
   Param,
   Delete,
   Patch,
-  Logger,
 } from '@nestjs/common';
 import { JobsService } from './jobs.service';
 import { Job } from './entities/job.entity';

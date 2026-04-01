@@ -3,6 +3,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Employee } from 'src/modules/employees/entities/employee.entity';
 import { Department } from 'src/modules/departments/entities/department.entity';
 import { Job } from 'src/modules/jobs/entities/job.entity';
+import 'dotenv/config';
+
+const databasePassword = process.env.DATABASE_PASSWORD;
 
 @Module({
   imports: [
@@ -11,7 +14,7 @@ import { Job } from 'src/modules/jobs/entities/job.entity';
       host: 'pg-3885965-personnel-management.e.aivencloud.com',
       port: 24880,
       username: 'avnadmin',
-      password: process.env.DATABASE_PASSWORD,
+      password: databasePassword,
       database: 'defaultdb',
       ssl: { rejectUnauthorized: false },
       entities: [Employee, Department, Job],

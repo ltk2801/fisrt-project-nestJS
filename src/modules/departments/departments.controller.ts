@@ -6,7 +6,6 @@ import {
   Param,
   Delete,
   Patch,
-  Logger,
 } from '@nestjs/common';
 import { DepartmentsService } from './departments.service';
 import { Department } from './entities/department.entity';
