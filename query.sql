@@ -68,3 +68,22 @@ CREATE TABLE IF NOT EXISTS employees (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP WITH TIME ZONE -- Dùng cho Soft Delete
 );
+
+-- Tạo bảng Users
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    username VARCHAR(30) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL, -- Độ dài 255 để chứa chuỗi đã Bcrypt hash
+    role VARCHAR(20) DEFAULT 'USER',
+    is_active BOOLEAN DEFAULT TRUE,
+    employee_id UUID UNIQUE, -- Đảm bảo 1 nhân viên chỉ có 1 tài khoản
+    
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE,
+
+    CONSTRAINT fk_user_employee 
+        FOREIGN KEY(employee_id) 
+        REFERENCES employees(id) 
+        ON DELETE CASCADE
+);

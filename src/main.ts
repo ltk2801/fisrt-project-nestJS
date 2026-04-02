@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   // Tạo một instance Logger với tên ngữ cảnh là 'Bootstrap'
@@ -8,12 +8,21 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
-  // 2. Cấu hình Port
+  // 2. Cấu hình chạy Global Pipe (PHẢI TRƯỚC app.listen)
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // Tự động loại bỏ các trường không có trong DTO
+      forbidNonWhitelisted: true, // Báo lỗi nếu gửi lên trường lạ
+      transform: true, // Tự động convert kiểu dữ liệu (vd: string sang number)
+    }),
+  );
+
+  // 3. Cấu hình Port
   const PORT = process.env.PORT || 3000;
 
   await app.listen(PORT);
 
-  // 3. Thông báo chạy Port thành công
+  // 4. Thông báo chạy Port thành công
   logger.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
   logger.log(`📅 Ngày bắt đầu: ${new Date().toLocaleDateString('vi-VN')}`);
 }

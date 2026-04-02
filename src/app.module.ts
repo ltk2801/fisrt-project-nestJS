@@ -4,6 +4,8 @@ import { DepartmentsModule } from './modules/departments/departments.module';
 import { JobsModule } from './modules/jobs/jobs.module';
 import { DatabaseModule } from './database/database.module';
 import { ConfigModule } from '@nestjs/config';
+import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -16,6 +18,8 @@ import { ConfigModule } from '@nestjs/config';
     EmployeesModule,
     DepartmentsModule,
     JobsModule,
+    AuthModule,
+    UsersModule,
   ],
   controllers: [],
 })
