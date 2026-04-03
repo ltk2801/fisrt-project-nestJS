@@ -3,8 +3,8 @@ CREATE TABLE IF NOT EXISTS departments (
     -- Sử dụng UUID làm khóa chính
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     
-    -- Tên phòng ban: Không trống, tối đa 100 ký tự, phải độc nhất
-    name VARCHAR(100) NOT NULL UNIQUE,
+    -- Tên phòng ban: Không trống, tối đa 50 ký tự, phải độc nhất
+    name VARCHAR(50) NOT NULL UNIQUE,
     
     -- Mô tả phòng ban: Có thể trống
     description TEXT,

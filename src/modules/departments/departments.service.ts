@@ -3,6 +3,10 @@ import { Department } from './entities/department.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
+// import các Data Transfer Object (DTO) để có thể sử dụng trong service
+import { DepartmentCreateDto } from './dto/department-create-dto';
+import { DepartmentUpdateDto } from './dto/department-update-dto';
+
 // import các interface mình vừa tạo để có thể sử dụng gửi dữ liệu về cho FE
 import {
   IDepartmentBase,
@@ -27,8 +31,8 @@ export class DepartmentsService {
     });
   }
 
-  // create a new department
-  create(department: Department) {
+  // create a new department use DTO
+  createDepartment(department: DepartmentCreateDto) {
     return this.departmentsRepository.save(department);
   }
   // find a department by id
@@ -36,7 +40,7 @@ export class DepartmentsService {
     return this.departmentsRepository.findOneBy({ id });
   }
   // update a department
-  async update(id: string, department: Department) {
+  async update(id: string, department: DepartmentUpdateDto) {
     await this.departmentsRepository.update(id, department);
     return this.departmentsRepository.findOneBy({ id });
   }

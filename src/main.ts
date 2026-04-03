@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { BadRequestException, Logger, ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   // Tạo một instance Logger với tên ngữ cảnh là 'Bootstrap'
@@ -9,11 +9,28 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // 2. Cấu hình chạy Global Pipe (PHẢI TRƯỚC app.listen)
+  // Đây là 1 Validation
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // Tự động loại bỏ các trường không có trong DTO
-      forbidNonWhitelisted: true, // Báo lỗi nếu gửi lên trường lạ
-      transform: true, // Tự động convert kiểu dữ liệu (vd: string sang number)
+      // 1. Tự động chuyển đổi kiểu dữ liệu (Transform)
+      transform: true,
+
+      // 2. Loại bỏ các trường không được định nghĩa trong DTO (Security)
+      whitelist: true,
+      // 5. Quá trình xác thực dừng lại ở lỗi đầu tiên
+      stopAtFirstError: true,
+
+      // 3. Chặn đứng request nếu gửi lên trường lạ (Strict)
+      forbidNonWhitelisted: true,
+
+      // 4. Tùy chỉnh thông báo lỗi trả về cho Frontend (Exception Factory) , ở API , status 400
+      exceptionFactory: (errors) => {
+        const result = errors.map((error) => ({
+          property: error.property,
+          message: Object.values(error.constraints)[0],
+        }));
+        return new BadRequestException(result);
+      },
     }),
   );
 

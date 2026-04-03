@@ -16,14 +16,15 @@ export class Department {
 
   @Column({
     type: 'varchar',
-    length: 100,
+    length: 50,
     unique: true, // Đảm bảo tên phòng ban là duy nhất ở cấp độ DB
     nullable: false, // Không được phép để trống tên
   })
   name: string;
 
   @Column({
-    type: 'text',
+    type: 'varchar',
+    length: 255,
     nullable: true, // Mô tả có thể có hoặc không
   })
   description: string;

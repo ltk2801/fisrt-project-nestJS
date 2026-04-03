@@ -1,15 +1,14 @@
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
-import { RegisterUserDto } from './dto/auth-register.dto';
-import { LoginUserDto } from './dto/auth-login.dto';
 import { User } from '../users/entities/users.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ConflictException } from '@nestjs/common/exceptions/conflict.exception';
-
+// Import DTOs
+import { RegisterUserDto } from './dto/auth-register.dto';
+import { LoginUserDto } from './dto/auth-login.dto';
 // JWT
 import { JwtService } from '@nestjs/jwt';
-
 // Import bcrypt để compare lại password khi đăng nhập
 import * as bcrypt from 'bcrypt';
 
