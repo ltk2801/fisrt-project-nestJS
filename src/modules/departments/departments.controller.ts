@@ -31,10 +31,10 @@ export class DepartmentsController {
     return this.departmentsService.findOne(id);
   }
 
+  // Tiến hành phân quyền của user ở đây, chỉ có admin mới có thể tạo 1 phòng ban mới
   // Create a new department
-  @UseGuards(AuthGuard) // Bảo vệ route này bằng AuthGuard, chỉ những request có token hợp lệ mới được phép tạo phòng ban mới
+  @UseGuards(AuthGuard, RolesGuard) // Bảo vệ route này bằng AuthGuard, chỉ những request có token hợp lệ mới được phép tạo phòng ban mới
   @Roles(Role.Admin) // Chỉ những user có role Admin mới được phép tạo phòng ban mới
-  @UseGuards(RolesGuard)
   @Post()
   create(@Body() department: Department) {
     return this.departmentsService.create(department);
@@ -43,6 +43,7 @@ export class DepartmentsController {
   // Update a department
   @UseGuards(AuthGuard) // Bảo vệ route này bằng AuthGuard, chỉ những request có token hợp lệ mới được phép cập nhật phòng ban
   @Patch(':id')
+  // Đây là 1 ví dụ để sử dụng transfrom,
   update(@Param('id') id: string, @Body() department: Department) {
     return this.departmentsService.update(id, department);
   }

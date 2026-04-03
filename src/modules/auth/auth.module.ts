@@ -15,7 +15,7 @@ const jwtSecret = process.env.JWT_SECRET; // Lấy giá trị JWT_SECRET từ bi
     TypeOrmModule.forFeature([User]),
     JwtModule.register({
       secret: jwtSecret, // Sử dụng giá trị JWT_SECRET từ biến môi trường
-      signOptions: { expiresIn: '60s' }, // Token sẽ hết hạn sau 1 giờ
+      signOptions: { expiresIn: '6d' }, // Token sẽ hết hạn sau 6 ngày
     }),
   ],
   controllers: [AuthController],
