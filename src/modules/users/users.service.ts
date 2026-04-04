@@ -18,7 +18,7 @@ export class UsersService {
   // ***** FUNCTION FE lấy dữ liệu là id , username và password của user
   async getSelectOptions(): Promise<IuserBase[]> {
     const users = await this.userRepository.find({
-      select: ['id', 'username', 'password'], // Chỉ lấy id và password để trả về cho FE
+      select: ['id', 'username'], // Chỉ lấy id và username để trả về cho FE
     });
     return users as unknown as IuserBase[];
   }
@@ -27,7 +27,10 @@ export class UsersService {
   async findByUsername(username: string): Promise<User> {
     return await this.userRepository.findOne({ where: { username } });
   }
-
+  // **** FUNCTION find a user by id
+  async findById(id: string): Promise<User> {
+    return await this.userRepository.findOne({ where: { id } });
+  }
   // ****** FUNCTION Get all role in table USER (để có thể hiển thị ra FE)
   async findAllRoles(): Promise<string[]> {
     const roles = await this.userRepository
@@ -42,10 +45,13 @@ export class UsersService {
   async clearRefreshToken(userId: string): Promise<void> {
     await this.userRepository.update(userId, { refreshToken: null });
   }
+  // ***** FUNCTION UPDATE PASSWORD
+  async updatePassword(id: string, newPassword: string): Promise<void> {
+    await this.userRepository.update(id, { password: newPassword });
+  }
 
   // **** FUNCTION UPDATE USER Do ADMIN thực hiện, add EmployeeID và Lock/UnLock tài khoản
   async updateUser(id: string, user: UpdateUserDto) {
     await this.userRepository.update(id, user);
-    return this.userRepository.findOneBy({ id });
   }
 }

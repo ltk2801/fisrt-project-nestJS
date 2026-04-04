@@ -17,6 +17,8 @@ import { RegisterUserDto } from './dto/auth-register.dto';
 import { LoginUserDto } from './dto/auth-login.dto';
 import { RefreshTokenDto } from './dto/auth-refresh.dto';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { ChangePasswordUserDto } from './dto/auth-change-password.dto';
+import { GuestGuard } from 'src/common/guards/guest.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -25,12 +27,14 @@ export class AuthController {
   // Register
   @HttpCode(HttpStatus.OK) // Đặt mã trạng thái HTTP trả về là 200 OK thay vì 201 Created
   @Post('register')
+  @UseGuards(GuestGuard)
   create(@Body() RegisterUserDto: RegisterUserDto) {
     return this.authService.registerUser(RegisterUserDto);
   }
   // Login
   @HttpCode(HttpStatus.OK)
   @Post('login')
+  @UseGuards(GuestGuard)
   async login(@Body() loginUserDto: LoginUserDto) {
     return this.authService.signIn(loginUserDto);
   }
@@ -59,5 +63,16 @@ export class AuthController {
     return {
       message: 'Đăng xuất thành công',
     };
+  }
+
+  // ChangePassword
+  @UseGuards(AuthGuard)
+  @Patch('changePassword')
+  async changePassword(
+    @Request() req,
+    @Body() changePasswordUserDto: ChangePasswordUserDto,
+  ) {
+    const userId = req.user.sub; // lấy userId từ thông tin user được đính kèm vào request
+    await this.authService.changePassword(userId, changePasswordUserDto);
   }
 }

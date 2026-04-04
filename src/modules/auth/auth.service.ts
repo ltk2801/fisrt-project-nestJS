@@ -7,6 +7,7 @@ import { ConflictException } from '@nestjs/common/exceptions/conflict.exception'
 // Import DTOs
 import { RegisterUserDto } from './dto/auth-register.dto';
 import { LoginUserDto } from './dto/auth-login.dto';
+import { ChangePasswordUserDto } from './dto/auth-change-password.dto';
 // JWT
 import { JwtService } from '@nestjs/jwt';
 // Import bcrypt để compare lại password khi đăng nhập
@@ -109,8 +110,50 @@ export class AuthService {
       );
     }
   }
+  // ChangePassword
+  async changePassword(
+    userId: string,
+    changePasswordUserdto: ChangePasswordUserDto,
+  ): Promise<{}> {
+    // Find user by userId
+    const user = await this.usersService.findById(userId);
+    // if user not found
+    if (!user) {
+      throw new UnauthorizedException(
+        'Không tìm thấy userName này trên hệ thống',
+      );
+    }
+    // checking oldPassword === password.compare
+    const isMatch = await bcrypt.compare(
+      changePasswordUserdto.oldPassword,
+      user.password,
+    );
+    // if not mathch, throw error
+    if (!isMatch) {
+      throw new UnauthorizedException('Mật khẩu cũ không đúng');
+    }
+    // else
+    // Hash mật khẩu của user trước khi lưu vào database
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(
+      changePasswordUserdto.newPassword,
+      salt,
+    );
+    // updatePassword in DB & Loggout user
+    await this.usersService.updatePassword(userId, hashedPassword);
+    // 4. Generate JWT tokens
+    const payload = { username: user.username, sub: user.id, role: user.role };
+    const access_token = this.jwtService.sign(payload);
+    const refresh_token = this.jwtService.sign(payload, { expiresIn: '7d' });
+    return {
+      message: 'Password updated',
+      access_token: access_token,
+      refresh_token: refresh_token,
+    };
+  }
+
   // **** FUNCtION LOGOUT
-  async logout(userId: number): Promise<void> {
+  async logout(userId: string): Promise<void> {
     // clear refresh token của user trong database
     await this.usersService.clearRefreshToken(userId.toString());
   }

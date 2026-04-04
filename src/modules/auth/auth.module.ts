@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { UsersModule } from '../users/users.module';
@@ -12,8 +12,8 @@ const jwtSecret = process.env.JWT_SECRET; // Lấy giá trị JWT_SECRET từ bi
 
 @Module({
   imports: [
-    EmployeesModule,
-    UsersModule,
+    forwardRef(() => EmployeesModule),
+    forwardRef(() => UsersModule),
     TypeOrmModule.forFeature([User]),
     JwtModule.register({
       secret: jwtSecret, // Sử dụng giá trị JWT_SECRET từ biến môi trường

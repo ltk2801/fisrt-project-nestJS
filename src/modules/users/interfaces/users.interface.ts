@@ -3,7 +3,6 @@
 export interface IuserBase {
   id: string;
   userName: string;
-  password: string;
 }
 
 // 2. Dùng cho danh sách các user ( có thêm trạng thái hoạt động), Dùng kế thừa từ Cái khung cơ bản nhất
