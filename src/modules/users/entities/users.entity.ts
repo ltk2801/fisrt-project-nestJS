@@ -12,6 +12,7 @@ import {
 } from 'typeorm';
 import { Employee } from '../../employees/entities/employee.entity';
 import { Exclude } from 'class-transformer';
+import { Role } from 'src/common/enum/role.enum';
 
 @Entity('users')
 export class User {
@@ -33,11 +34,13 @@ export class User {
   @Exclude() // Ẩn mật khẩu khi trả về JSON (cần ClassSerializerInterceptor)
   password: string;
 
+  // Sử dụng enum để bắt buộc dữ liệu nhập vào DB chỉ có thể là USER, ADMIN , MANAGER
   @Column({
-    type: 'varchar',
-    default: 'USER', // Ví dụ: 'ADMIN', 'USER', 'MANAGER'
+    type: 'enum',
+    enum: Role,
+    default: Role.User, // Ví dụ: 'ADMIN', 'USER', 'MANAGER'
   })
-  role: string;
+  role: Role;
 
   @Column({
     type: 'boolean',

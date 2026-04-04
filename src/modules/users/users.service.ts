@@ -53,5 +53,8 @@ export class UsersService {
   // **** FUNCTION UPDATE USER Do ADMIN thực hiện, add EmployeeID và Lock/UnLock tài khoản
   async updateUser(id: string, user: UpdateUserDto) {
     await this.userRepository.update(id, user);
+    return {
+      message: 'successful updated',
+    };
   }
 }

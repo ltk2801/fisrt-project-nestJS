@@ -29,6 +29,7 @@ export class AuthGuard implements CanActivate {
       const payload = this.jwtService.verify(token, {
         secret: process.env.JWT_SECRET,
       });
+
       // Nếu xác thực token thành công, ta đính kèm thông tin của người dùng vào đối tượng request.
       // Nhờ đó, ở Controller bạn có thể lấy được thông tin của người dùng đang gọi API thông qua @Req() req
       request['user'] = payload;

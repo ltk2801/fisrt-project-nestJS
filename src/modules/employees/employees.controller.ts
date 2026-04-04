@@ -27,12 +27,6 @@ export class EmployeesController {
     return this.employeesService.findOne(id);
   }
 
-  // create a. new employee
-  @Post()
-  create(@Body() employee: Employee) {
-    return this.employeesService.create(employee);
-  }
-
   // update an employee
   @Patch(':id')
   update(@Param('id') id: string, @Body() employee: Employee) {

@@ -1,9 +1,14 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  UnauthorizedException,
+  ConflictException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { User } from '../users/entities/users.entity';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ConflictException } from '@nestjs/common/exceptions/conflict.exception';
 // Import DTOs
 import { RegisterUserDto } from './dto/auth-register.dto';
 import { LoginUserDto } from './dto/auth-login.dto';
@@ -23,27 +28,44 @@ export class AuthService {
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
     private readonly employeesService: EmployeesService,
+    // import Inject Datasource for manage transaction
+    private dataSource: DataSource,
   ) {}
 
   // ******* FUNCTION. create a new user // Đã sử dụng Dto để có thể validation dư liệu đầu vào
   async registerUser(registerUserDto: RegisterUserDto): Promise<User> {
-    // 1. Kiểm tra username đã tồn tại chưa ?
-    const exitsUser = await this.userRepository.findOne({
-      where: { username: registerUserDto.username },
-    });
-    if (exitsUser) {
-      throw new ConflictException('Username đã tồn tại');
-    }
-    // 2. Hash mật khẩu của user trước khi lưu vào database
+    // 1. Hash mật khẩu của user trước khi lưu vào database
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(registerUserDto.password, salt); // Ở đây mình chưa hash mật khẩu, bạn có thể sử dụng thư viện bcrypt để hash mật khẩu trước khi lưu vào database
-    // 3. Tạo một instance của User entity với dữ liệu đã được hash mật khẩu
-    const newUser = this.userRepository.create({
-      username: registerUserDto.username,
-      password: hashedPassword,
+    const hashedPassword = await bcrypt.hash(registerUserDto.password, salt);
+
+    // Begin transaction
+    return await this.dataSource.transaction(async (manager) => {
+      // Kiểm tra tồn tại (Dùng manager để check trong phiên làm việc của transaction)
+      const exitsUser = await manager.findOne(User, {
+        where: { username: registerUserDto.username },
+      });
+      if (exitsUser) {
+        throw new ConflictException('Username đã tồn tại');
+      }
+      try {
+        // Bước 1 : Tạo EMPLOYEE TRƯỚC (Vì User cần ID của Employee, Employee là bảng cha),
+        // truyen manager vao de quan ly transaction
+        const savedEmployee = await this.employeesService.createEmpty(manager);
+        // Tao user va gan employee vua tao vao
+        const newUser = manager.create(User, {
+          username: registerUserDto.username,
+          password: hashedPassword,
+          employeeId: savedEmployee.id, // TypeORM tu trich xuat ID tu project nay
+        });
+        // luu user vao db
+        return await manager.save(newUser);
+      } catch (error) {
+        // Nếu bước 4 hoặc 5 lỗi, toàn bộ thay đổi ở bước 3 (Employee) sẽ bị xóa sạch
+        throw new InternalServerErrorException(
+          'Đăng ký thất bại, dữ liệu đã được rollback',
+        );
+      }
     });
-    // 4. Lưu user mới vào database
-    return await this.userRepository.save(newUser);
   }
 
   // *** FUCTION LOGIN USER
