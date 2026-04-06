@@ -1,7 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { Job } from './entities/job.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
+// Import DTO
+import { JobCreateDto } from './dto/job-create-dto';
 
 @Injectable()
 export class JobsService {
@@ -9,13 +12,27 @@ export class JobsService {
     @InjectRepository(Job)
     private jobsRepository: Repository<Job>,
   ) {}
+  // Check Min & Max Salary
+  private async validateSalary(minSalary?: number, maxSalary?: number) {
+    return minSalary <= maxSalary ? true : false;
+  }
+
   // get all jobs
   findAll() {
     return this.jobsRepository.find();
   }
-  // create a new job
-  create(job: Job) {
-    return this.jobsRepository.save(job);
+  //  *************** create a new job
+  async createJob(job: JobCreateDto) {
+    const checkSalary = await this.validateSalary(job.minSalary, job.maxSalary);
+    if (!checkSalary) {
+      throw new BadRequestException(
+        'Mức lương tối thiểu phải bé hơn hoặc bằng mức lương tối đa',
+      );
+    }
+    await this.jobsRepository.save(job);
+    return {
+      message: 'Create a new job successfull',
+    };
   }
   // find a job by id
   findOne(id: string) {

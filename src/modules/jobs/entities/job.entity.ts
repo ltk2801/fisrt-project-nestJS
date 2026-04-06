@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { Employee } from '../../employees/entities/employee.entity';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ColumnNumericTransformer } from 'src/common/pipes/transfrom-string-to-number';
 
 @Entity('jobs')
 export class Job {
@@ -27,17 +28,27 @@ export class Job {
   title: string; // Ví dụ: Backend Developer, HR Manager
 
   @ApiProperty({
-    example: 1000,
-    description: 'Muc luong toi thieu',
+    example: 6000000,
+    description: 'Muc luong toi thieu (VND) ',
   })
-  @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
+  @Column({
+    type: 'decimal',
+    precision: 15,
+    scale: 0,
+    transformer: new ColumnNumericTransformer(),
+  })
   minSalary: number;
 
   @ApiProperty({
-    example: 2000,
-    description: 'Muc luong toi da',
+    example: 20000000,
+    description: 'Muc luong toi da (VND)',
   })
-  @Column({ type: 'decimal', precision: 12, scale: 2, default: 0 })
+  @Column({
+    type: 'decimal',
+    precision: 15,
+    scale: 0,
+    transformer: new ColumnNumericTransformer(),
+  })
   maxSalary: number;
 
   @ApiProperty({

@@ -1,9 +1,4 @@
-import {
-  ClassSerializerInterceptor,
-  Injectable,
-  Logger,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Department } from './entities/department.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -16,8 +11,8 @@ import { DepartmentUpdateDto } from './dto/department-update-dto';
 import {
   IDepartmentBase,
   IDepartmentList,
-  IDepartmentDetail,
 } from './interfaces/department.interface';
+import { ExcelExportService } from 'src/common/excel/excel.export.service';
 
 @Injectable()
 export class DepartmentsService {
@@ -25,6 +20,7 @@ export class DepartmentsService {
   constructor(
     @InjectRepository(Department)
     private departmentsRepository: Repository<Department>,
+    private excelExportService: ExcelExportService,
   ) {}
 
   // Các phương thức để làm việc với dữ liệu phòng ban, sẽ được gọi từ controller
@@ -68,5 +64,23 @@ export class DepartmentsService {
   async remove(id: string) {
     await this.departmentsRepository.delete(id);
     return { deleted: true };
+  }
+
+  // Export data department to excel
+
+  async exportDepartmentsToExcel() {
+    // Lấy dữ liệu từ DB
+    const departments = await this.departmentsRepository.find({
+      select: ['id', 'name', 'description', 'isActive'],
+    });
+    // Chuyển đổi dữ liệu lấy về thành header,key,value
+    const excelColumns =
+      this.excelExportService.autoGenerateColumns(departments);
+
+    // Gọi service export file excel
+    return this.excelExportService.generateExcelStream(
+      excelColumns,
+      departments,
+    );
   }
 }

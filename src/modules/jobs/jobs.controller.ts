@@ -6,6 +6,7 @@ import {
   Param,
   Delete,
   Patch,
+  UseGuards,
 } from '@nestjs/common';
 import { JobsService } from './jobs.service';
 import { Job } from './entities/job.entity';
@@ -15,7 +16,15 @@ import {
   ApiOperation,
   ApiParam,
   ApiTags,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
+
+// Import Auth
+import { AuthGuard } from 'src/common/guards/auth.guard';
+import { RolesGuard } from 'src/common/guards/role.guard';
+import { Role } from 'src/common/enum/role.enum';
+import { Roles } from 'src/common/decorators/roles.decorator';
+import { JobCreateDto } from './dto/job-create-dto';
 
 @ApiTags('Jobs')
 @Controller('jobs')
@@ -41,11 +50,14 @@ export class JobsController {
 
   // Create a new job
   @ApiOperation({ summary: 'Tao job moi' })
+  @ApiBearerAuth('access-token')
   @ApiBody({ type: Job })
   @ApiOkResponse({ description: 'Tao job thanh cong' })
-  @Post()
-  create(@Body() job: Job) {
-    return this.jobsService.create(job);
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles(Role.Admin)
+  @Post('create-job')
+  create(@Body() job: JobCreateDto) {
+    return this.jobsService.createJob(job);
   }
 
   // Update a job

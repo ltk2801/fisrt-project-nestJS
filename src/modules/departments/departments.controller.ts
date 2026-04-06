@@ -1,4 +1,5 @@
 import {
+  StreamableFile,
   Controller,
   Get,
   Post,
@@ -10,6 +11,7 @@ import {
   ParseUUIDPipe,
   UseInterceptors,
   ClassSerializerInterceptor,
+  Res,
 } from '@nestjs/common';
 import { DepartmentsService } from './departments.service';
 import { AuthGuard } from '../../common/guards/auth.guard';
@@ -28,6 +30,7 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
+import type { Response } from 'express';
 
 @ApiTags('Departments')
 @Controller('departments')
@@ -71,6 +74,22 @@ export class DepartmentsController {
     return this.departmentsService.createDepartment(department);
   }
 
+  // Export Data to Excel
+  @UseGuards(AuthGuard)
+  @Get('export-data')
+  async exportData(@Res({ passthrough: true }) res: Response) {
+    const fileStream = await this.departmentsService.exportDepartmentsToExcel();
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename="departments.xlsx"',
+    );
+    return new StreamableFile(fileStream);
+  }
+
   // Update a department
   @ApiOperation({ summary: 'Cap nhat phong ban' })
   @ApiBearerAuth('access-token')
@@ -107,6 +126,7 @@ export class DepartmentsController {
   @ApiParam({ name: 'id', description: 'Department ID' })
   @ApiOkResponse({ description: 'Lay chi tiet phong ban thanh cong' })
   @UseInterceptors(ClassSerializerInterceptor)
+  @UseGuards(AuthGuard)
   @Get(':id')
   async findDepartmentWithFullInfo(@Param('id', ParseUUIDPipe) id: string) {
     return this.departmentsService.findOne(id);

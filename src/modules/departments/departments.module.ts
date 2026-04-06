@@ -4,9 +4,10 @@ import { DepartmentsService } from './departments.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Department } from './entities/department.entity';
 import { AuthModule } from '../auth/auth.module';
+import { ExcelModule } from 'src/common/excel/excel.module';
 
 @Module({
-  imports: [AuthModule, TypeOrmModule.forFeature([Department])],
+  imports: [AuthModule, ExcelModule, TypeOrmModule.forFeature([Department])],
   controllers: [DepartmentsController],
   providers: [DepartmentsService],
   exports: [DepartmentsService],
