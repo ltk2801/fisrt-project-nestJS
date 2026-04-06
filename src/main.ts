@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { BadRequestException, Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { useContainer } from 'class-validator';
 
 async function bootstrap() {
   // Tạo một instance Logger với tên ngữ cảnh là 'Bootstrap'
@@ -10,6 +11,10 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // 2. Cấu hình chạy Global Pipe (PHẢI TRƯỚC app.listen)
+  // usePipe custom unique
+  useContainer(app.select(AppModule), {
+    fallbackOnErrors: true,
+  });
   // Đây là 1 Validation
   app.useGlobalPipes(
     new ValidationPipe({
@@ -34,7 +39,7 @@ async function bootstrap() {
       },
     }),
   );
-
+  /////// Swagger config
   const swaggerConfig = new DocumentBuilder()
     .setTitle('QLNV API')
     .setDescription('Tai lieu API cho he thong quan ly nhan vien')

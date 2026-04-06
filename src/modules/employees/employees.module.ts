@@ -7,6 +7,7 @@ import { AuthModule } from '../auth/auth.module';
 import { DepartmentsModule } from '../departments/departments.module';
 import { JobsModule } from '../jobs/jobs.module';
 import { UsersModule } from '../users/users.module';
+import { IsUniqueConstraint } from 'src/common/pipes/is-unique.validator';
 
 @Module({
   imports: [
@@ -17,7 +18,7 @@ import { UsersModule } from '../users/users.module';
     UsersModule,
   ],
   controllers: [EmployeesController],
-  providers: [EmployeesService],
+  providers: [EmployeesService, IsUniqueConstraint],
   exports: [EmployeesService],
 })
 export class EmployeesModule {}

@@ -16,6 +16,7 @@ import {
 } from 'class-validator';
 import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
+import { IsUnique } from 'src/common/pipes/is-unique.validator';
 
 export class UpdateEmployeeDto {
   @ApiProperty({ example: 'An', description: 'Tên riêng của nhân viên' })
