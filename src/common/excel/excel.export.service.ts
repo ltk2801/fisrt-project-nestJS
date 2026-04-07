@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as ExcelJS from 'exceljs';
 import { PassThrough } from 'stream';
 
@@ -38,6 +38,20 @@ export class ExcelExportService {
 
     return Math.min(Math.max(maxContentLength + 4, 14), 40);
   }
+
+  private FIELD_LABELS = {
+    employeeId: 'Mã nhân viên',
+    fullName: 'Họ và Tên',
+    email: 'Email',
+    phoneNumber: 'Số điện thoại',
+    departName: 'Phòng ban',
+    hireDate: 'Ngày vào làm việc',
+    accountId: 'Mã tài khoản',
+    username: 'Tên đăng nhập',
+    jobId: 'Mã chức vụ',
+    departId: 'Mã phòng ban',
+    jobTitle: 'Tên chức vụ',
+  };
 
   /**
    * Tạo stream Excel dựa trên cột và dữ liệu tùy chỉnh
@@ -160,9 +174,8 @@ export class ExcelExportService {
     const validKeys = Object.keys(firstItem).filter(
       (key) => firstItem[key] !== undefined,
     );
-
     return validKeys.map((key) => ({
-      header: key.toUpperCase(),
+      header: this.FIELD_LABELS[key] || key.toUpperCase(),
       key: key,
     }));
   }

@@ -149,25 +149,25 @@ export class EmployeesService {
       .leftJoin(User, 'user', 'user.employeeId = employee.id')
       .select([
         'employee.id AS employee_id',
-        'employee.firstName AS employee_first_name',
-        'employee.lastName AS employee_last_name',
+        'employee.firstName AS employee_firstName',
+        'employee.lastName AS employee_lastName',
         'employee.email AS employee_email',
-        'employee.phoneNumber AS employee_phone_number',
-        'employee.hireDate AS employee_hire_date',
-        'employee.isActive AS employee_is_active',
+        'employee.phoneNumber AS employee_phoneNumber',
+        'employee.hireDate AS employee_hireDate',
+        'employee.isActive AS employee_isActive',
         'department.id AS department_id',
         'department.name AS department_name',
         'department.description AS department_description',
-        'department.isActive AS department_is_active',
+        'department.isActive AS department_isActive',
         'job.id AS job_id',
         'job.title AS job_title',
-        'job.minSalary AS job_min_salary',
-        'job.maxSalary AS job_max_salary',
-        'job.isActive AS job_is_active',
+        'job.minSalary AS job_minSalary',
+        'job.maxSalary AS job_maxSalary',
+        'job.isActive AS job_isActive',
         'user.id AS user_id',
         'user.username AS user_username',
         'user.role AS user_role',
-        'user.isActive AS user_is_active',
+        'user.isActive AS user_isActive',
       ])
       .where('employee.id = :id', { id })
       .getRawOne();
@@ -176,8 +176,8 @@ export class EmployeesService {
       throw new BadRequestException(`Không tìm thấy nhân viên`);
     }
 
-    const firstName = employeeDetail.employee_first_name ?? null;
-    const lastName = employeeDetail.employee_last_name ?? null;
+    const firstName = employeeDetail.employee_firstname ?? null;
+    const lastName = employeeDetail.employee_lastname ?? null;
     const fullName = [lastName, firstName].filter(Boolean).join(' ').trim();
 
     return {
@@ -187,25 +187,25 @@ export class EmployeesService {
         lastName,
         fullName,
         email: employeeDetail.employee_email ?? null,
-        phoneNumber: employeeDetail.employee_phone_number ?? null,
-        hireDate: employeeDetail.employee_hire_date ?? null,
-        isActive: Boolean(employeeDetail.employee_is_active),
+        phoneNumber: employeeDetail.employee_phonenumber ?? null,
+        hireDate: employeeDetail.employee_hiredate ?? null,
+        isActive: Boolean(employeeDetail.employee_isactive),
       },
       department: employeeDetail.department_id
         ? {
             id: employeeDetail.department_id,
             name: employeeDetail.department_name,
             description: employeeDetail.department_description ?? null,
-            isActive: Boolean(employeeDetail.department_is_active),
+            isActive: Boolean(employeeDetail.department_isactive),
           }
         : null,
       job: employeeDetail.job_id
         ? {
             id: employeeDetail.job_id,
             title: employeeDetail.job_title,
-            minSalary: Number(employeeDetail.job_min_salary),
-            maxSalary: Number(employeeDetail.job_max_salary),
-            isActive: Boolean(employeeDetail.job_is_active),
+            minSalary: Number(employeeDetail.job_minsalary),
+            maxSalary: Number(employeeDetail.job_maxsalary),
+            isActive: Boolean(employeeDetail.job_isactive),
           }
         : null,
       account: employeeDetail.user_id
@@ -213,55 +213,87 @@ export class EmployeesService {
             id: employeeDetail.user_id,
             username: employeeDetail.user_username,
             role: employeeDetail.user_role,
-            isActive: Boolean(employeeDetail.user_is_active),
+            isActive: Boolean(employeeDetail.user_isactive),
           }
         : null,
     };
   }
 
   // Export data employees to excel
+  async exportFullInfoEmployeeToExcel(
+    fields?: string,
+    page?: number,
+    limit?: number,
+  ) {
+    // Dinh nghia danh sach cac cot hop le ma DB co ma khi client gui lai phai dung thong tin can
+    // Ánh xạ field giống với column trong db
+    const EMPLOYEE_EXPORT_MAP = {
+      employeeId: 'employee.id',
+      fullName: "CONCAT(employee.lastName, ' ', employee.firstName)",
+      email: 'employee.email',
+      phoneNumber: 'employee.phoneNumber',
+      hireDate: "TO_CHAR(employee.hireDate, 'DD/MM/YYYY')",
+      departId: 'department.id',
+      departName: 'department.name',
+      jobId: 'job.id',
+      jobTitle: 'job.title',
+      accountId: 'user.id',
+      username: 'user.username',
+    };
+    const validFields = Object.keys(EMPLOYEE_EXPORT_MAP);
+    // Su dung ham
+    const findOptions = await this.excelExportService.optionsPagination(
+      fields,
+      page,
+      limit,
+      validFields,
+    );
 
-  // async exportDepartmentsToExcel(
-  //   fields?: string,
-  //   page?: number,
-  //   limit?: number,
-  // ) {
-  //   // Dinh nghia danh sach cac cot hop le ma DB co
-  //   const validFields = ['id', 'isActive', 'name', 'description'];
-  //   //  Xác định các keys cần xuất ( Nếu client không gửi thì lấy tất cả )
-  //   let selectedFields: any[] = validFields;
-  //   if (fields) {
-  //     // Tách chuỗi, lọc bỏ khoảng trắng và chỉ giữ lại những field nằm trong validFields
-  //     const requestedFields = fields.split(',').map((f) => f.trim());
-  //     const filteredFields = requestedFields.filter((f) =>
-  //       validFields.includes(f),
-  //     );
+    // Khởi tạo 1 QueryBuilder với các bản join
+    const query = this.employeesRepository
+      .createQueryBuilder('employee')
+      .leftJoin(User, 'user', 'employee.id = user.employeeId')
+      .leftJoin('employee.job', 'job')
+      .leftJoin('employee.department', 'department')
+      .select([]);
+    // Thứ tự chuẩn để export ra file
+    const EXPORT_ORDER = [
+      'employeeId',
+      'fullName',
+      'email',
+      'phoneNumber',
+      'hireDate',
+      'departId',
+      'departName',
+      'jobId',
+      'jobTitle',
+      'accountId',
+      'username',
+    ];
+    // Sắp xếp lại thứ tự
+    const sortedSelect = findOptions.select.sort((a, b) => {
+      return EXPORT_ORDER.indexOf(a) - EXPORT_ORDER.indexOf(b);
+    });
+    // 3. Apply SELECT từ options (Sử dụng Mapping)
+    sortedSelect.forEach((field: string) => {
+      const dbColumn = EMPLOYEE_EXPORT_MAP[field];
+      if (dbColumn) {
+        query.addSelect(dbColumn, field); // 'field' ở đây đóng vai trò là Alias (tên cột trong Excel)
+      }
+    });
 
-  //     // Nếu sau khi lọc vẫn còn ít nhất 1 field đúng thì mới ghi đè
-  //     if (filteredFields.length > 0) {
-  //       selectedFields = filteredFields;
-  //     }
-  //   }
+    // // 4. Apply Order, Take, Skip
+    query.orderBy('employee.id', 'ASC');
 
-  //   // Lấy dữ liệu từ DB
-  //   const findOptions: any = {
-  //     select: selectedFields,
-  //     order: { id: 'ASC' },
-  //   };
-  //   // neu co page va limit, co nghia la muon phan trang =>
-  //   if (page && limit) {
-  //     findOptions.take = limit;
-  //     findOptions.skip = (page - 1) * limit;
-  //   }
-  //   const departments = await this.departmentsRepository.find(findOptions);
-  //   // Chuyển đổi dữ liệu lấy về thành header,key,value
-  //   const excelColumns =
-  //     this.excelExportService.autoGenerateColumns(departments);
+    if (findOptions.take) query.limit(findOptions.take);
+    if (findOptions.skip) query.offset(findOptions.skip);
 
-  //   // Gọi service export file excel
-  //   return this.excelExportService.generateExcelStream(
-  //     excelColumns,
-  //     departments,
-  //   );
-  // }
+    // 5. Lấy dữ liệu dạng Raw (Phẳng)
+    const employees = await query.getRawMany();
+    // Chuyển đổi dữ liệu lấy về thành header,key,value
+    const excelColumns = this.excelExportService.autoGenerateColumns(employees);
+
+    // Gọi service export file excel
+    return this.excelExportService.generateExcelStream(excelColumns, employees);
+  }
 }

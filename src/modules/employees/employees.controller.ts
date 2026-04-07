@@ -1,4 +1,5 @@
 import {
+  StreamableFile,
   Controller,
   Get,
   Body,
@@ -9,16 +10,21 @@ import {
   HttpCode,
   HttpStatus,
   Request,
+  Query,
+  Res,
+  Logger,
 } from '@nestjs/common';
 import { EmployeesService } from './employees.service';
 import { Employee } from './entities/employee.entity';
 import {
+  ApiBearerAuth,
   ApiBody,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiProduces,
+  ApiQuery,
   ApiTags,
-  ApiBearerAuth,
 } from '@nestjs/swagger';
 
 // Import Dto
@@ -32,6 +38,7 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 import { RolesGuard } from 'src/common/guards/role.guard';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 //
+import type { Response } from 'express';
 
 @ApiTags('Employees')
 @Controller('employees')
@@ -44,6 +51,65 @@ export class EmployeesController {
   @Get()
   findAll() {
     return this.employeesService.findAll();
+  }
+  // Export Data to Excel
+  @ApiOperation({
+    summary:
+      'Export danh sach full danh sách thông tin của nhân viên ra file Excel',
+  })
+  @ApiBearerAuth('access-token')
+  @ApiProduces(
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  )
+  @ApiQuery({
+    name: 'fields',
+    required: false,
+    description: 'Danh sach field can export, cach nhau boi dau phay',
+    example: 'employeeId,fullName,email,hireDate,...',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Trang du lieu can export',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'So ban ghi trong moi trang khi export',
+    example: 20,
+  })
+  @ApiOkResponse({
+    description: 'Tra ve file Excel danh sach nhan vien',
+    schema: {
+      type: 'string',
+      format: 'binary',
+    },
+  })
+  @UseGuards(AuthGuard)
+  @Get('export-data')
+  async exportData(
+    // Neu khong co bat cu query nao gui vao thi se export all du lieu
+    @Query('fields') fields: string, // Client gui ?fields = id,name hoac ?fiedls = name,des de export duoc dung du lieu
+    @Query('page') page: number, // Neu muon lay du lieu tu page nao thi nhap vao day
+    @Query('limit') limit: number, // So dong du lieu trong 1 trang muon lay
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const fileStream =
+      await this.employeesService.exportFullInfoEmployeeToExcel(
+        fields,
+        page,
+        limit,
+      );
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader(
+      'Content-Disposition',
+      'attachment; filename="employees.xlsx"',
+    );
+    return new StreamableFile(fileStream);
   }
 
   // Get a single employee by id
