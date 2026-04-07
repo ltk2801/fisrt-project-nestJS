@@ -16,11 +16,13 @@ import { JobsService } from './jobs.service';
 import { Job } from './entities/job.entity';
 import {
   ApiBody,
+  ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiProduces,
+  ApiQuery,
   ApiTags,
-  ApiBearerAuth,
 } from '@nestjs/swagger';
 
 // Import Auth
@@ -38,6 +40,36 @@ export class JobsController {
   constructor(private readonly jobsService: JobsService) {}
 
   // Export Data to Excel
+  @ApiOperation({ summary: 'Export danh sach job ra file Excel' })
+  @ApiBearerAuth('access-token')
+  @ApiProduces(
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  )
+  @ApiQuery({
+    name: 'fields',
+    required: false,
+    description: 'Danh sach field can export, cach nhau boi dau phay',
+    example: 'id,title,minSalary,maxSalary,isActive',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Trang du lieu can export',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'So ban ghi trong moi trang khi export',
+    example: 20,
+  })
+  @ApiOkResponse({
+    description: 'Tra ve file Excel danh sach job',
+    schema: {
+      type: 'string',
+      format: 'binary',
+    },
+  })
   @UseGuards(AuthGuard)
   @Get('export-data')
   async exportData(
@@ -91,6 +123,7 @@ export class JobsController {
 
   // Update a job
   @ApiOperation({ summary: 'Cap nhat job' })
+  @ApiBearerAuth('access-token')
   @ApiParam({ name: 'id', description: 'Job ID' })
   @ApiBody({ type: Job })
   @ApiOkResponse({ description: 'Cap nhat job thanh cong' })
@@ -101,6 +134,7 @@ export class JobsController {
 
   // Delete a job
   @ApiOperation({ summary: 'Xoa job' })
+  @ApiBearerAuth('access-token')
   @ApiParam({ name: 'id', description: 'Job ID' })
   @ApiOkResponse({ description: 'Xoa job thanh cong' })
   @Delete(':id')

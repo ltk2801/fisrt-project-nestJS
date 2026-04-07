@@ -19,6 +19,7 @@ Backend API cho he thong quan ly nhan vien, duoc xay dung bang NestJS, TypeORM, 
 - Quan ly departments
 - Quan ly employees
 - Quan ly jobs
+- Export du lieu departments va jobs ra file Excel
 - Phan quyen theo role
 - Tai lieu API bang Swagger
 
@@ -86,6 +87,26 @@ Sau khi chay ung dung, tai lieu API co san tai:
 http://localhost:3000/api-docs
 ```
 
+Swagger da duoc bo sung cho cac API export file Excel, bao gom:
+
+- `GET /departments/export-data`
+- `GET /jobs/export-data`
+
+Co the truyen query khi export:
+
+- `fields`: danh sach cot can export, cach nhau boi dau phay
+- `page`: trang du lieu can lay
+- `limit`: so ban ghi moi trang
+
+Vi du:
+
+```text
+/departments/export-data?fields=id,name,isActive&page=1&limit=20
+/jobs/export-data?fields=id,title,minSalary,maxSalary&page=1&limit=10
+```
+
+Hai endpoint tren yeu cau `Bearer access token` va tra ve file `.xlsx`.
+
 ## Scripts huu ich
 
 ```bash
@@ -122,7 +143,7 @@ npm run test:e2e
 
 - Validation request dang duoc xu ly bang `ValidationPipe` global
 - DTO co ket hop `class-validator` va Swagger decorators
-- Khi them API moi, endpoint se duoc Swagger quet tu dong; de docs day du hon, nen them `@ApiOperation`, `@ApiBody`, `@ApiOkResponse`, `@ApiBearerAuth`, `@ApiProperty`
+- Khi them API moi, endpoint se duoc Swagger quet tu dong; de docs day du hon, nen them `@ApiOperation`, `@ApiBody`, `@ApiOkResponse`, `@ApiBearerAuth`, `@ApiParam`, `@ApiQuery`, `@ApiProduces`, `@ApiProperty`
 
 ## License
 

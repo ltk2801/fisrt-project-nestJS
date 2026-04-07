@@ -29,6 +29,8 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiParam,
+  ApiProduces,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import type { Response } from 'express';
@@ -76,6 +78,36 @@ export class DepartmentsController {
   }
 
   // Export Data to Excel
+  @ApiOperation({ summary: 'Export danh sach phong ban ra file Excel' })
+  @ApiBearerAuth('access-token')
+  @ApiProduces(
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  )
+  @ApiQuery({
+    name: 'fields',
+    required: false,
+    description: 'Danh sach field can export, cach nhau boi dau phay',
+    example: 'id,name,description,isActive',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Trang du lieu can export',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'So ban ghi trong moi trang khi export',
+    example: 20,
+  })
+  @ApiOkResponse({
+    description: 'Tra ve file Excel danh sach phong ban',
+    schema: {
+      type: 'string',
+      format: 'binary',
+    },
+  })
   @UseGuards(AuthGuard)
   @Get('export-data')
   async exportData(

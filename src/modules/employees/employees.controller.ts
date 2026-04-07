@@ -23,6 +23,7 @@ import {
 
 // Import Dto
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
+import { EmployeeDetailResponseDto } from './dto/employee-detail-response.dto';
 
 // Import Auth
 import { AuthGuard } from 'src/common/guards/auth.guard';
@@ -55,6 +56,12 @@ export class EmployeesController {
   }
 
   // Get a full info employee by id
+  @ApiOperation({ summary: 'Lay thong tin chi tiet nhan vien da duoc rut gon' })
+  @ApiParam({ name: 'id', description: 'Employee ID' })
+  @ApiOkResponse({
+    description: 'Lay thong tin chi tiet nhan vien thanh cong',
+    type: EmployeeDetailResponseDto,
+  })
   @Get('full-info/:id')
   async getFullInfo(@Param('id') id: string) {
     return this.employeesService.getEmployeeDetails(id);

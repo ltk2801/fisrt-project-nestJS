@@ -7,12 +7,14 @@ import { EntityManager, Not, Repository } from 'typeorm';
 import { UpdateEmployeeDto } from './dto/update-employee.dto';
 
 // Import Interface
+import { IEmployeeDetailResponse } from './interfaces/employees.interface';
 
 // Import service
 import { JobsService } from '../jobs/jobs.service';
 import { DepartmentsService } from '../departments/departments.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UsersService } from '../users/users.service';
+import { User } from '../users/entities/users.entity';
 
 /////////
 import { ExcelExportService } from 'src/common/excel/excel.export.service';
@@ -139,19 +141,82 @@ export class EmployeesService {
   }
 
   // *************************** GET FULL INFO EMPLOYEE
-  async getEmployeeDetails(id: string) {
-    return await this.employeesRepository
-      .createQueryBuilder('employee') // 'employee' là alias (bí danh)
-      // // Join với bảng User (1-1)
-      // .leftJoinAndSelect('employee.user', 'users')
-      // Join với bảng Job (n-1)
-      .leftJoinAndSelect('employee.job', 'jobs')
-      // Join với bảng Department (n-1)
-      .leftJoinAndSelect('employee.department', 'departments')
-      // Điều kiện lọc
+  async getEmployeeDetails(id: string): Promise<IEmployeeDetailResponse> {
+    const employeeDetail = await this.employeesRepository
+      .createQueryBuilder('employee')
+      .leftJoin('employee.job', 'job')
+      .leftJoin('employee.department', 'department')
+      .leftJoin(User, 'user', 'user.employeeId = employee.id')
+      .select([
+        'employee.id AS employee_id',
+        'employee.firstName AS employee_first_name',
+        'employee.lastName AS employee_last_name',
+        'employee.email AS employee_email',
+        'employee.phoneNumber AS employee_phone_number',
+        'employee.hireDate AS employee_hire_date',
+        'employee.isActive AS employee_is_active',
+        'department.id AS department_id',
+        'department.name AS department_name',
+        'department.description AS department_description',
+        'department.isActive AS department_is_active',
+        'job.id AS job_id',
+        'job.title AS job_title',
+        'job.minSalary AS job_min_salary',
+        'job.maxSalary AS job_max_salary',
+        'job.isActive AS job_is_active',
+        'user.id AS user_id',
+        'user.username AS user_username',
+        'user.role AS user_role',
+        'user.isActive AS user_is_active',
+      ])
       .where('employee.id = :id', { id })
-      // Thực thi
-      .getOne();
+      .getRawOne();
+
+    if (!employeeDetail) {
+      throw new BadRequestException(`Không tìm thấy nhân viên`);
+    }
+
+    const firstName = employeeDetail.employee_first_name ?? null;
+    const lastName = employeeDetail.employee_last_name ?? null;
+    const fullName = [lastName, firstName].filter(Boolean).join(' ').trim();
+
+    return {
+      employee: {
+        id: employeeDetail.employee_id,
+        firstName,
+        lastName,
+        fullName,
+        email: employeeDetail.employee_email ?? null,
+        phoneNumber: employeeDetail.employee_phone_number ?? null,
+        hireDate: employeeDetail.employee_hire_date ?? null,
+        isActive: Boolean(employeeDetail.employee_is_active),
+      },
+      department: employeeDetail.department_id
+        ? {
+            id: employeeDetail.department_id,
+            name: employeeDetail.department_name,
+            description: employeeDetail.department_description ?? null,
+            isActive: Boolean(employeeDetail.department_is_active),
+          }
+        : null,
+      job: employeeDetail.job_id
+        ? {
+            id: employeeDetail.job_id,
+            title: employeeDetail.job_title,
+            minSalary: Number(employeeDetail.job_min_salary),
+            maxSalary: Number(employeeDetail.job_max_salary),
+            isActive: Boolean(employeeDetail.job_is_active),
+          }
+        : null,
+      account: employeeDetail.user_id
+        ? {
+            id: employeeDetail.user_id,
+            username: employeeDetail.user_username,
+            role: employeeDetail.user_role,
+            isActive: Boolean(employeeDetail.user_is_active),
+          }
+        : null,
+    };
   }
 
   // Export data employees to excel

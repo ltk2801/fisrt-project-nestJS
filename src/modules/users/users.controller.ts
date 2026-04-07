@@ -19,6 +19,7 @@ import {
   ApiBody,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
 
@@ -44,6 +45,7 @@ export class UsersController {
   // Update user
   @ApiOperation({ summary: 'Cap nhat thong tin user' })
   @ApiBearerAuth('access-token')
+  @ApiParam({ name: 'id', description: 'User ID' })
   @ApiBody({ type: UpdateUserDto })
   @ApiOkResponse({ description: 'Cap nhat user thanh cong' })
   @UseGuards(AuthGuard, RolesGuard) // Bảo vệ route này bằng AuthGuard, chỉ những request có token hợp lệ mới được phép cập nhật phòng ban
@@ -57,6 +59,7 @@ export class UsersController {
 
   @ApiOperation({ summary: 'Xoa user' })
   @ApiBearerAuth('access-token')
+  @ApiParam({ name: 'id', description: 'User ID' })
   @ApiOkResponse({ description: 'Xoa user thanh cong' })
   @UseGuards(AuthGuard, RolesGuard)
   @Roles(Role.Admin)
