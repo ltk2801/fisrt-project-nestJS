@@ -1,5 +1,6 @@
 import {
   StreamableFile,
+  BadRequestException,
   Controller,
   Get,
   Post,
@@ -10,13 +11,15 @@ import {
   UseGuards,
   Query,
   Res,
-  Logger,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { JobsService } from './jobs.service';
 import { Job } from './entities/job.entity';
 import {
   ApiBody,
   ApiBearerAuth,
+  ApiConsumes,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
@@ -31,6 +34,7 @@ import { RolesGuard } from 'src/common/guards/role.guard';
 import { Role } from 'src/common/enum/role.enum';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { JobCreateDto } from './dto/job-create-dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 import type { Response } from 'express';
 
@@ -38,6 +42,36 @@ import type { Response } from 'express';
 @Controller('jobs')
 export class JobsController {
   constructor(private readonly jobsService: JobsService) {}
+
+  // // Import File Excel to DB
+  @ApiOperation({ summary: 'Import danh sach job tu file Excel' })
+  @ApiBearerAuth('access-token')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+      required: ['file'],
+    },
+  })
+  @ApiOkResponse({ description: 'Import file Excel job thanh cong' })
+  // @UseGuards(AuthGuard, RolesGuard)
+  // @Roles(Role.Admin)
+  @UseGuards(AuthGuard)
+  @UseInterceptors(FileInterceptor('file'))
+  @Post('import-data')
+  async importData(@UploadedFile() file: Express.Multer.File) {
+    if (!file?.buffer) {
+      throw new BadRequestException('Vui lòng tải lên file Excel hợp lệ');
+    }
+
+    return this.jobsService.importJobsFromExcel(file.buffer);
+  }
 
   // Export Data to Excel
   @ApiOperation({ summary: 'Export danh sach job ra file Excel' })
